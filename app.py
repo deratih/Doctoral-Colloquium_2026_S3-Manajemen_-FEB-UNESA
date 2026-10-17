@@ -1,9 +1,10 @@
 import os
+import zipfile
 import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Data Reviewer Eksternal FEB UNESA",
+    page_title="Data Reviewer Eksternal DOCTORAL COLLOQUIUM FEB UNESA",
     layout="wide",
     page_icon="📝",
 )
@@ -92,7 +93,7 @@ def load_data():
 
 df_data = load_data()
 
-st.title("📌 Portal Pengumpulan Data Reviewer Eksternal FEB UNESA")
+st.title("📌 Portal Pengumpulan Data Reviewer Eksternal DOCTORAL COLLOQUIUM FEB UNESA")
 tab1, tab2 = st.tabs(["📥 Form Upload Moderator", "📊 Tabel Data Terkumpul"])
 
 with tab1:
@@ -163,10 +164,41 @@ with tab1:
 
 with tab2:
     st.dataframe(df_data, use_container_width=True)
-    csv_data = df_data.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        "📥 Unduh Rekap Data (CSV)",
-        data=csv_data,
-        file_name="rekap_reviewer.csv",
-        mime="text/csv",
-    )
+
+    col_btn1, col_btn2 = st.columns(2)
+
+    # 1. Unduh Data CSV
+    with col_btn1:
+        csv_data = df_data.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            "📥 Unduh Rekap Data (CSV)",
+            data=csv_data,
+            file_name="rekap_reviewer.csv",
+            mime="text/csv",
+        )
+
+    # 2. Unduh Semua File Gambar (ZIP)
+    with col_btn2:
+        zip_path = "semua_berkas_reviewer.zip"
+        files_present = False
+        with zipfile.ZipFile(zip_path, "w") as zipf:
+            for root, dirs, files in os.walk(UPLOAD_DIR):
+                for file in files:
+                    files_present = True
+                    zipf.write(
+                        os.path.join(root, file),
+                        os.path.relpath(
+                            os.path.join(root, file), UPLOAD_DIR
+                        ),
+                    )
+
+        if files_present and os.path.exists(zip_path):
+            with open(zip_path, "rb") as f:
+                st.download_button(
+                    label="📦 Unduh Semua Berkas Gambar (ZIP)",
+                    data=f,
+                    file_name="berkas_gambar_reviewer.zip",
+                    mime="application/zip",
+                )
+        else:
+            st.info("💡 Belum ada berkas gambar yang diunggah untuk diunduh.")
